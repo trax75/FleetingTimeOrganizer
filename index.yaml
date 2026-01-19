@@ -1,0 +1,141 @@
+# Index - Fleeting Time Organizer
+# Diese Datei zuerst lesen bei jedem Chat-Start
+
+project:
+  name: "Fleeting Time"
+  type: "React Native / Expo App"
+  platforms: [Android, iOS]
+  status: "Android Test im Play Store (versionCode 7)"
+
+# =============================================================================
+# CLAUDE STEUERUNGSDATEIEN
+# =============================================================================
+
+claude_files:
+  - file: CHECKPOINT.md
+    purpose: "Aktueller Stand fuer schnellen Restart"
+    read_on_start: true
+    priority: 1
+
+  - file: TASKS.md
+    purpose: "Aktuelle Aufgaben vom User"
+    read_on_start: true
+    priority: 2
+
+  - file: CLAUDE_RULES.md
+    purpose: "Arbeitsregeln und Vorgehen"
+    read_on_start: true
+    priority: 3
+    sections:
+      - name: "Dumb Zone Concept"
+        lines: "5-11"
+        summary: "Context Window bei 40% = schlechtere Ergebnisse"
+      - name: "Context Engineering Principles"
+        lines: "15-55"
+        summary: "Memory externalisieren, Todo-Listen, Failure Traces"
+      - name: "RPI Methodology"
+        lines: "58-102"
+        summary: "Research -> Plan -> Implement Workflow"
+      - name: "Practical Techniques"
+        lines: "105-179"
+        summary: "Compaction, Sub-Agents, Progressive Disclosure"
+      - name: "Trajectory Management"
+        lines: "182-212"
+        summary: "Negative Patterns vermeiden, wann Restart"
+      - name: "Projekt-spezifische Regeln"
+        lines: "271-316"
+        summary: "Code-Stil, Git, Rote Linien, Plattformen"
+      - name: "Context-Management & Checkpoints"
+        lines: "321-371"
+        summary: "Wer macht was, Checkpoint-Format, Restart-Anweisung"
+
+  - file: CLAUDE_MEMORY.md
+    purpose: "Langzeit-Projektwissen"
+    read_on_start: true
+    priority: 4
+    sections:
+      - name: "Projekt-Kontext"
+        summary: "App-Name, Tech-Stack, Status"
+      - name: "Projekt-Struktur"
+        summary: "Ordner-Layout: mobile/, shared/, frontend/, backend/"
+      - name: "Hauptfeatures"
+        summary: "Zeit-Timer, Custom Timer, Life Timer, Dark Mode"
+      - name: "IDs & Konfiguration"
+        summary: "Bundle ID, EAS Project ID"
+
+# =============================================================================
+# CODE-STRUKTUR
+# =============================================================================
+
+codebase:
+  mobile:
+    path: "mobile/"
+    description: "React Native App (Hauptfokus)"
+    key_files:
+      - file: "app/(tabs)/index.tsx"
+        purpose: "Dashboard mit Timer-Grid"
+        lines: ~307
+      - file: "app/(tabs)/life.tsx"
+        purpose: "Life Timer Feature"
+        lines: ~960
+      - file: "app/(tabs)/settings.tsx"
+        purpose: "Einstellungen"
+      - file: "app/(tabs)/_layout.tsx"
+        purpose: "Tab-Navigation Layout"
+      - file: "app/timer/add.tsx"
+        purpose: "Custom Timer hinzufuegen"
+      - file: "app/timer/[id].tsx"
+        purpose: "Timer bearbeiten"
+      - file: "src/stores/timerStore.ts"
+        purpose: "Zustand Store fuer Timer"
+      - file: "src/stores/settingsStore.ts"
+        purpose: "Zustand Store fuer Settings"
+      - file: "src/stores/lifeTimerStore.ts"
+        purpose: "Zustand Store fuer Life Timer"
+    config:
+      - file: "app.json"
+        purpose: "Expo Konfiguration"
+      - file: "package.json"
+        purpose: "Dependencies"
+
+  shared:
+    path: "shared/"
+    description: "Geteilte Types und Utils"
+    key_files:
+      - file: "types/index.ts"
+        purpose: "TypeScript Types"
+      - file: "utils/timeCalculations.ts"
+        purpose: "Zeit-Berechnungen"
+      - file: "utils/lifeExpectancyOffline.ts"
+        purpose: "Lebenserwartungs-Berechnung"
+      - file: "index.ts"
+        purpose: "Exports"
+
+  frontend:
+    path: "frontend/"
+    description: "Web-Version (React/Vite)"
+    status: "Sekundaer, nicht Hauptfokus"
+
+  backend:
+    path: "backend/"
+    description: "Backend"
+    status: "Minimal, noch nicht genutzt"
+
+# =============================================================================
+# TECH STACK QUICK REFERENCE
+# =============================================================================
+
+tech_stack:
+  framework: "React Native 0.81 + Expo SDK 54"
+  language: "TypeScript"
+  state: "Zustand"
+  navigation: "Expo Router"
+  ui: "Custom Components + react-native-svg"
+
+# =============================================================================
+# LETZTE AKTUALISIERUNG
+# =============================================================================
+
+last_updated: "2026-01-19"
+updated_by: "Claude"
+reason: "Initial index creation"
