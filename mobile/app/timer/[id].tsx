@@ -1,0 +1,333 @@
+import { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import type { TimerMode } from '@ultimate-timer/shared';
+import { useTimerStore } from '../../src/stores/timerStore';
+import { useTheme } from '../../src/hooks/useTheme';
+
+function formatDateForInput(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toISOString().split('T')[0];
+}
+
+function formatTimeForInput(isoString: string): string {
+  const date = new Date(isoString);
+  return date.toTimeString().slice(0, 5);
+}
+
+export default function EditTimerScreen() {
+  const { theme } = useTheme();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const timers = useTimerStore((state) => state.timers);
+  const updateTimer = useTimerStore((state) => state.updateTimer);
+  const deleteTimer = useTimerStore((state) => state.deleteTimer);
+
+  const timer = timers.find((t) => t.id === id);
+
+  const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('00:00');
+  const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('23:59');
+  const [defaultMode, setDefaultMode] = useState<TimerMode>('elapsed');
+
+  useEffect(() => {
+    if (timer) {
+      setName(timer.name);
+      if (timer.startDate) {
+        setStartDate(formatDateForInput(timer.startDate));
+        setStartTime(formatTimeForInput(timer.startDate));
+      }
+      if (timer.endDate) {
+        setEndDate(formatDateForInput(timer.endDate));
+        setEndTime(formatTimeForInput(timer.endDate));
+      }
+      setDefaultMode(timer.defaultViewMode || timer.mode);
+    }
+  }, [timer]);
+
+  if (!timer) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: theme.text }]}>
+          Timer not found
+        </Text>
+      </View>
+    );
+  }
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      Alert.alert('Required', 'Please enter a timer name');
+      return;
+    }
+    if (!startDate || !endDate) {
+      Alert.alert('Required', 'Please enter start and end dates');
+      return;
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      Alert.alert('Invalid Date', 'Please use YYYY-MM-DD format');
+      return;
+    }
+
+    const start = new Date(`${startDate}T${startTime}:00`);
+    const end = new Date(`${endDate}T${endTime}:00`);
+
+    if (end <= start) {
+      Alert.alert('Invalid Range', 'End date must be after start date');
+      return;
+    }
+
+    updateTimer(timer.id, {
+      name: name.trim(),
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      defaultViewMode: defaultMode,
+    });
+
+    router.back();
+  };
+
+  const handleDelete = () => {
+    Alert.alert('Delete Timer', `Are you sure you want to delete "${timer.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          deleteTimer(timer.id);
+          router.back();
+        },
+      },
+    ]);
+  };
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={styles.content}
+    >
+      {/* Name */}
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: theme.text }]}>Timer Name *</Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          placeholder="My Timer"
+          placeholderTextColor={theme.textTertiary}
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
+
+      {/* Start Date/Time */}
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: theme.text }]}>Start Date *</Text>
+        <View style={styles.dateTimeRow}>
+          <TextInput
+            style={[
+              styles.input,
+              styles.dateInput,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                color: theme.text,
+              },
+            ]}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={theme.textTertiary}
+            value={startDate}
+            onChangeText={setStartDate}
+          />
+          <TextInput
+            style={[
+              styles.input,
+              styles.timeInput,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                color: theme.text,
+              },
+            ]}
+            placeholder="HH:MM"
+            placeholderTextColor={theme.textTertiary}
+            value={startTime}
+            onChangeText={setStartTime}
+          />
+        </View>
+      </View>
+
+      {/* End Date/Time */}
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: theme.text }]}>End Date *</Text>
+        <View style={styles.dateTimeRow}>
+          <TextInput
+            style={[
+              styles.input,
+              styles.dateInput,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                color: theme.text,
+              },
+            ]}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor={theme.textTertiary}
+            value={endDate}
+            onChangeText={setEndDate}
+          />
+          <TextInput
+            style={[
+              styles.input,
+              styles.timeInput,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                color: theme.text,
+              },
+            ]}
+            placeholder="HH:MM"
+            placeholderTextColor={theme.textTertiary}
+            value={endTime}
+            onChangeText={setEndTime}
+          />
+        </View>
+      </View>
+
+      {/* Default View Mode */}
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: theme.text }]}>Default View</Text>
+        <View style={styles.buttonGroup}>
+          {(['elapsed', 'remaining'] as TimerMode[]).map((option) => (
+            <Pressable
+              key={option}
+              onPress={() => setDefaultMode(option)}
+              style={[
+                styles.button,
+                {
+                  backgroundColor: defaultMode === option ? theme.primary : theme.surface,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: defaultMode === option ? '#fff' : theme.text,
+                  fontSize: 14,
+                  fontWeight: '500',
+                }}
+              >
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Save Button */}
+      <Pressable
+        onPress={handleSave}
+        style={[styles.saveButton, { backgroundColor: theme.primary }]}
+      >
+        <Text style={styles.saveButtonText}>Save Changes</Text>
+      </Pressable>
+
+      {/* Delete Button */}
+      <Pressable
+        onPress={handleDelete}
+        style={[styles.deleteButton, { borderColor: theme.border }]}
+      >
+        <Text style={styles.deleteButtonText}>Delete Timer</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 48,
+  },
+  field: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dateInput: {
+    flex: 2,
+  },
+  timeInput: {
+    flex: 1,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  button: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  saveButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+  },
+  deleteButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
