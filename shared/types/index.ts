@@ -87,3 +87,100 @@ export interface LifeTimer {
   result: LifeExpectancyResult;
   createdAt: string;
 }
+
+// =============================================================================
+// MVP SCHEMA EXTENSIONS (Epic 1.1)
+// =============================================================================
+
+/**
+ * Schema Version for migrations
+ * Increment when making breaking changes to stored data structures
+ */
+export const SCHEMA_VERSION = 1;
+
+// -----------------------------------------------------------------------------
+// Mood Tracking (Post-Timer Feedback)
+// -----------------------------------------------------------------------------
+
+export type MoodRating = 1 | 2 | 3 | 4 | 5;
+
+export interface MoodEntry {
+  id: string;
+  timerId: string;
+  timerType: TimerType;
+  rating: MoodRating;
+  note?: string;
+  recordedAt: string; // ISO timestamp
+}
+
+// -----------------------------------------------------------------------------
+// Widget Data Schema
+// -----------------------------------------------------------------------------
+
+export type WidgetSize = '2x1' | '2x2' | '4x1' | '4x2';
+
+export interface WidgetConfig {
+  id: string;
+  timerId: string;           // Reference to Timer or LifeTimer
+  timerType: 'timer' | 'life';
+  size: WidgetSize;
+  showPercentage: boolean;
+  showTimeRemaining: boolean;
+  createdAt: string;
+}
+
+export interface WidgetData {
+  timerId: string;
+  timerName: string;
+  percent: number;
+  displayText: string;       // Pre-formatted for widget
+  updatedAt: string;
+}
+
+// -----------------------------------------------------------------------------
+// Share Intent Schema
+// -----------------------------------------------------------------------------
+
+export interface ShareableTimer {
+  version: number;           // Schema version for compatibility
+  type: 'custom';            // Only custom timers are shareable
+  name: string;
+  startDate: string;         // ISO date
+  endDate: string;           // ISO date
+  mode: TimerMode;
+}
+
+export interface ShareableTimerLink {
+  /** Base64 encoded ShareableTimer */
+  payload: string;
+  /** Short hash for validation */
+  checksum: string;
+}
+
+// -----------------------------------------------------------------------------
+// Store State Interfaces (for type-safe persistence)
+// -----------------------------------------------------------------------------
+
+export interface PersistedTimerState {
+  version: number;
+  timers: Timer[];
+  initialized: boolean;
+}
+
+export interface PersistedLifeTimerState {
+  version: number;
+  lifeTimers: LifeTimer[];
+  // Legacy fields (v0) - kept for migration
+  lifeTimerData?: LifeTimerData | null;
+  lifeExpectancyResult?: LifeExpectancyResult | null;
+}
+
+export interface PersistedMoodState {
+  version: number;
+  entries: MoodEntry[];
+}
+
+export interface PersistedWidgetState {
+  version: number;
+  configs: WidgetConfig[];
+}

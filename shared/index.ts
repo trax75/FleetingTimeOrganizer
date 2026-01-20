@@ -6,3 +6,4 @@ export * from './utils/timeCalculations';
 export * from './utils/constants';
 export * from './utils/lifeExpectancy';
 export * from './utils/lifeExpectancyOffline';
+export * from './utils/migrations';

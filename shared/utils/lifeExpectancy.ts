@@ -220,28 +220,30 @@ export function calculateAdjustments(data: LifeTimerData): {
     totalAdjustment += 2;
   }
 
-  // Chronic condition
-  switch (data.chronicCondition) {
-    case 'cardiovascular':
-      details.push({ factor: 'Cardiovascular condition', adjustment: -4 });
-      totalAdjustment -= 4;
-      break;
-    case 'diabetes':
-      details.push({ factor: 'Diabetes', adjustment: -3 });
-      totalAdjustment -= 3;
-      break;
-    case 'cancer':
-      details.push({ factor: 'Cancer history', adjustment: -4 });
-      totalAdjustment -= 4;
-      break;
-    case 'respiratory':
-      details.push({ factor: 'Respiratory condition', adjustment: -3 });
-      totalAdjustment -= 3;
-      break;
-    case 'other':
-      details.push({ factor: 'Chronic condition', adjustment: -2 });
-      totalAdjustment -= 2;
-      break;
+  // Chronic conditions (can have multiple)
+  for (const condition of data.chronicConditions) {
+    switch (condition) {
+      case 'cardiovascular':
+        details.push({ factor: 'Cardiovascular condition', adjustment: -4 });
+        totalAdjustment -= 4;
+        break;
+      case 'diabetes':
+        details.push({ factor: 'Diabetes', adjustment: -3 });
+        totalAdjustment -= 3;
+        break;
+      case 'cancer':
+        details.push({ factor: 'Cancer history', adjustment: -4 });
+        totalAdjustment -= 4;
+        break;
+      case 'respiratory':
+        details.push({ factor: 'Respiratory condition', adjustment: -3 });
+        totalAdjustment -= 3;
+        break;
+      case 'other':
+        details.push({ factor: 'Chronic condition', adjustment: -2 });
+        totalAdjustment -= 2;
+        break;
+    }
   }
 
   // Cap total adjustment at ±10 years
