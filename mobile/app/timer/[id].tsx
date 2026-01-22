@@ -7,11 +7,35 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  Share,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { TimerMode } from '@ultimate-timer/shared';
+import Svg, { Path } from 'react-native-svg';
+import type { TimerMode, NotificationThreshold } from '@ultimate-timer/shared';
 import { useTimerStore } from '../../src/stores/timerStore';
 import { useTheme } from '../../src/hooks/useTheme';
+import { generateShareText } from '../../src/services/shareService';
+import { requestNotificationPermission } from '../../src/services/notificationService';
+
+const NOTIFICATION_OPTIONS: { value: NotificationThreshold; label: string }[] = [
+  { value: 50, label: '50%' },
+  { value: 80, label: '80%' },
+  { value: 100, label: '100%' },
+];
+
+function ShareIcon({ color, size }: { color: string; size: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function formatDateForInput(isoString: string): string {
   const date = new Date(isoString);
@@ -38,6 +62,33 @@ export default function EditTimerScreen() {
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState('23:59');
   const [defaultMode, setDefaultMode] = useState<TimerMode>('elapsed');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationThresholds, setNotificationThresholds] = useState<NotificationThreshold[]>([100]);
+
+  const toggleThreshold = (threshold: NotificationThreshold) => {
+    setNotificationThresholds((prev) =>
+      prev.includes(threshold)
+        ? prev.filter((t) => t !== threshold)
+        : [...prev, threshold].sort((a, b) => a - b)
+    );
+  };
+
+  const handleToggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        setNotificationsEnabled(true);
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'Notifications are disabled. Please enable them in your device settings to receive timer alerts.',
+          [{ text: 'OK' }]
+        );
+      }
+    } else {
+      setNotificationsEnabled(false);
+    }
+  };
 
   useEffect(() => {
     if (timer) {
@@ -51,6 +102,8 @@ export default function EditTimerScreen() {
         setEndTime(formatTimeForInput(timer.endDate));
       }
       setDefaultMode(timer.defaultViewMode || timer.mode);
+      setNotificationsEnabled(timer.notifications?.enabled ?? false);
+      setNotificationThresholds(timer.notifications?.thresholds ?? [100]);
     }
   }, [timer]);
 
@@ -93,6 +146,10 @@ export default function EditTimerScreen() {
       startDate: start.toISOString(),
       endDate: end.toISOString(),
       defaultViewMode: defaultMode,
+      notifications: {
+        enabled: notificationsEnabled,
+        thresholds: notificationThresholds,
+      },
     });
 
     router.back();
@@ -110,6 +167,18 @@ export default function EditTimerScreen() {
         },
       },
     ]);
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareText = generateShareText(timer);
+      await Share.share({
+        message: shareText,
+        title: `Share ${timer.name}`,
+      });
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
   };
 
   return (
@@ -240,13 +309,77 @@ export default function EditTimerScreen() {
         </View>
       </View>
 
-      {/* Save Button */}
-      <Pressable
-        onPress={handleSave}
-        style={[styles.saveButton, { backgroundColor: theme.primary }]}
-      >
-        <Text style={styles.saveButtonText}>Save Changes</Text>
-      </Pressable>
+      {/* Notifications */}
+      <View style={styles.field}>
+        <View style={styles.notificationHeader}>
+          <Text style={[styles.label, { color: theme.text, marginBottom: 0 }]}>Notifications</Text>
+          <Pressable
+            onPress={handleToggleNotifications}
+            style={[
+              styles.toggle,
+              {
+                backgroundColor: notificationsEnabled ? theme.primary : theme.surface,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Text style={{ color: notificationsEnabled ? '#fff' : theme.text, fontSize: 12 }}>
+              {notificationsEnabled ? 'ON' : 'OFF'}
+            </Text>
+          </Pressable>
+        </View>
+        {notificationsEnabled && (
+          <View style={styles.thresholdContainer}>
+            <Text style={[styles.hint, { color: theme.textTertiary, marginBottom: 8 }]}>
+              Get notified when progress reaches:
+            </Text>
+            <View style={styles.thresholdRow}>
+              {NOTIFICATION_OPTIONS.map((option) => {
+                const isSelected = notificationThresholds.includes(option.value);
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => toggleThreshold(option.value)}
+                    style={[
+                      styles.thresholdButton,
+                      {
+                        backgroundColor: isSelected ? theme.primary : theme.surface,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? '#fff' : theme.text,
+                        fontSize: 14,
+                        fontWeight: '500',
+                      }}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionRow}>
+        <Pressable
+          onPress={handleSave}
+          style={[styles.saveButton, { backgroundColor: theme.primary, flex: 1 }]}
+        >
+          <Text style={styles.saveButtonText}>Save Changes</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleShare}
+          style={[styles.shareButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        >
+          <ShareIcon color={theme.text} size={20} />
+        </Pressable>
+      </View>
 
       {/* Delete Button */}
       <Pressable
@@ -307,11 +440,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
   saveButton: {
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 12,
+  },
+  shareButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   saveButtonText: {
     color: '#fff',
@@ -329,5 +474,34 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontSize: 16,
     fontWeight: '600',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  toggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  thresholdContainer: {
+    marginTop: 4,
+  },
+  thresholdRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  thresholdButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  hint: {
+    fontSize: 12,
   },
 });

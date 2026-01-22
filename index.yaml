@@ -96,6 +96,16 @@ codebase:
         purpose: "Zustand Store fuer Mood Tracking (MVP)"
       - file: "src/stores/widgetStore.ts"
         purpose: "Zustand Store fuer Widget Config (MVP)"
+      - file: "src/services/notificationService.ts"
+        purpose: "Notification Service fuer Timer-Alerts"
+      - file: "src/services/shareService.ts"
+        purpose: "Share/Deep Link Service fuer Timer"
+      - file: "src/widgets/TimerWidget.tsx"
+        purpose: "Android Widget UI Komponente"
+      - file: "src/widgets/widgetTaskHandler.tsx"
+        purpose: "Widget Task Handler"
+      - file: "index.ts"
+        purpose: "App Entry mit Widget Registration"
     config:
       - file: "app.json"
         purpose: "Expo Konfiguration"
@@ -144,4 +154,4 @@ tech_stack:
 
 last_updated: "2026-01-20"
 updated_by: "Claude"
-reason: "Epic 1: Foundation abgeschlossen - Schema, Stores, Build validiert"
+reason: "Epic 5: Polish gestartet - TypeScript-Check OK, Beta Release bereit"

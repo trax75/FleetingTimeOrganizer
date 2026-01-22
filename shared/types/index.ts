@@ -8,6 +8,17 @@ export type TimerKind = 'standard' | 'custom' | 'life';
 
 export type PercentDecimals = 1 | 2 | 3;
 
+// -----------------------------------------------------------------------------
+// Notification Settings
+// -----------------------------------------------------------------------------
+
+export type NotificationThreshold = 50 | 80 | 100;
+
+export interface TimerNotificationConfig {
+  enabled: boolean;
+  thresholds: NotificationThreshold[]; // e.g. [50, 80, 100]
+}
+
 export interface Timer {
   id: string;
   name: string;
@@ -20,6 +31,9 @@ export interface Timer {
   kind?: TimerKind;
   viewMode?: TimerMode;        // Current toggle status for mobile
   defaultViewMode?: TimerMode; // For custom timers
+  notificationId?: string;     // Scheduled notification ID for end-date alerts (legacy)
+  notifications?: TimerNotificationConfig; // New: configurable notification thresholds
+  scheduledNotificationIds?: Record<NotificationThreshold, string>; // IDs per threshold
 }
 
 export interface TimerProgress {

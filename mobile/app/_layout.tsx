@@ -2,10 +2,16 @@ import { useEffect, useState, useCallback } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useTimerStore } from '../src/stores/timerStore';
 import { useSettingsStore } from '../src/stores/settingsStore';
 import { useTheme } from '../src/hooks/useTheme';
+import { initializeNotifications } from '../src/services/notificationService';
+import {
+  getInitialUrl,
+  addLinkingListener,
+  parseShareUrl,
+} from '../src/services/shareService';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -13,14 +19,60 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { theme, isDark } = useTheme();
   const initialize = useTimerStore((state) => state.initialize);
+  const addTimer = useTimerStore((state) => state.addTimer);
   const timerHydrated = useTimerStore((state) => state.hydrated);
   const settingsHydrated = useSettingsStore((state) => state.hydrated);
   const [appIsReady, setAppIsReady] = useState(false);
 
-  // Initialize timers on app start
+  // Handle incoming deep link
+  const handleDeepLink = useCallback(
+    (url: string) => {
+      const timer = parseShareUrl(url);
+      if (timer) {
+        Alert.alert(
+          'Import Timer',
+          `Would you like to add "${timer.name}" to your timers?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Add',
+              onPress: () => {
+                addTimer({
+                  name: timer.name,
+                  type: 'custom',
+                  mode: timer.mode,
+                  startDate: timer.startDate,
+                  endDate: timer.endDate,
+                });
+              },
+            },
+          ]
+        );
+      }
+    },
+    [addTimer]
+  );
+
+  // Initialize timers and notifications on app start
   useEffect(() => {
     initialize();
+    initializeNotifications().catch(console.error);
   }, [initialize]);
+
+  // Handle deep links
+  useEffect(() => {
+    // Check for initial URL (app opened via link)
+    getInitialUrl().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    // Listen for links while app is open
+    const subscription = addLinkingListener(({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => subscription.remove();
+  }, [handleDeepLink]);
 
   // Check if stores are hydrated
   useEffect(() => {

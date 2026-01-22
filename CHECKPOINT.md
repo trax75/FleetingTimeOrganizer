@@ -6,8 +6,8 @@
 
 ## Session-Status
 
-- **Phase:** Implement (Epic 1 abgeschlossen)
-- **Aktueller Task:** Epic 2 bereit
+- **Phase:** Implement (Epic 5 in Arbeit)
+- **Aktueller Task:** Beta Release vorbereiten
 
 ---
 
@@ -25,33 +25,52 @@
    - Ticket 1.1: Schema-Design (MVP Types: Mood, Widget, Share + SCHEMA_VERSION)
    - Ticket 1.2: Feature-Module Struktur (moodStore.ts, widgetStore.ts angelegt)
    - Ticket 1.3: Build-Setup validiert (TypeScript OK, Metro startet)
+10. **Epic 2: Core Timer abgeschlossen:**
+    - Ticket 2.1: Timer-Store bereits vorhanden (CRUD + System Timer)
+    - Ticket 2.2: Background Timer mit Notifications implementiert
+    - Ticket 2.3: Timer UI (Dashboard) bereits vorhanden
+11. **Epic 3: Life Timer - bereits komplett vorhanden:**
+    - Ticket 3.1: Life Timer Store (lifeTimerStore.ts)
+    - Ticket 3.2: Life Timer UI (life.tsx mit DonutChart)
+    - Ticket 3.3: Onboarding (Opt-in Formular mit Cancel)
+12. **Epic 4: Widget + Share abgeschlossen:**
+    - Ticket 4.1: Basic Widget (2x1) mit react-native-android-widget
+    - Ticket 4.2: Share-Intent mit Deep Link Support
+13. **Epic 5: Polish gestartet:**
+    - Ticket 5.1: Code-Review durchgefuehrt, TypeScript-Check OK
+    - Ticket 5.2: React 19 Type-Fehler behoben (skipLibCheck: true)
+    - Ticket 5.3: Beta Release Konfiguration geprueft
 
 ---
 
 ## Aktueller Stand des Codes
 
-### Neue Dateien
-- `shared/types/index.ts` - MVP Schema Extensions (MoodEntry, WidgetConfig, ShareableTimer)
-- `shared/utils/migrations.ts` - Schema-Migrations v0→v1
-- `mobile/src/stores/moodStore.ts` - Zustand Store fuer Mood Tracking
-- `mobile/src/stores/widgetStore.ts` - Zustand Store fuer Widget Config
+### Epic 5 - Aenderungen
+- `mobile/tsconfig.json` - skipLibCheck: true (React 19 Type-Kompatibilitaet)
 
-### Bug-Fixes
-- `shared/utils/lifeExpectancy.ts` - chronicCondition → chronicConditions (Array)
-- `shared/tsconfig.json` - War leer, jetzt korrekt konfiguriert
+### Features MVP-Complete
+- Timer Dashboard mit Donut-Charts
+- Custom Timer mit Start/End Datum
+- System Timer (Tag/Woche/Monat/Jahr)
+- Life Timer mit Lebenserwartung
+- Background Notifications
+- Share Timer als Text + Deep Link
+- Deep Link Import (ultimate-timer://timer?p=...)
+- Android Home-Screen Widget (2x1)
 
 ### Validiert
-- TypeScript-Check: OK (shared/ und mobile/)
-- `npm run dev:mobile`: Metro Bundler startet
+- TypeScript-Check: OK (mobile/ mit skipLibCheck)
+- Metro Bundler: Startet erfolgreich
 
 ---
 
 ## Naechster Schritt
 
-**Epic 2: Core Timer (Woche 2)**
-- Ticket 2.1: Timer-Store implementieren (CRUD, System Timer)
-- Ticket 2.2: Background Timer mit Notifications
-- Ticket 2.3: Timer UI (Dashboard)
+**Beta Release durchfuehren:**
+1. versionCode in app.json auf 8 erhoehen
+2. `eas build --platform android --profile preview`
+3. Play Store Internal Testing Track hochladen
+4. Physisches Testen auf verschiedenen Geraeten
 
 ---
 
@@ -59,11 +78,19 @@
 
 | Datei | Lesen bei Restart? |
 |-------|-------------------|
-| index.yaml | Ja, ZUERST - enthaelt Index aller Dateien |
+| index.yaml | Ja, ZUERST |
 | CHECKPOINT.md | Ja |
 | TASKS.md | Ja |
-| CLAUDE_MEMORY.md | Bei Bedarf (Langzeit-Wissen) |
-| CLAUDE_RULES.md | Bei Bedarf (Arbeitsregeln) |
+| CLAUDE_MEMORY.md | Bei Bedarf |
+| CLAUDE_RULES.md | Bei Bedarf |
+
+---
+
+## Hinweise
+
+- **Widget erfordert EAS Build**: Das Android Widget funktioniert nur mit `eas build` (custom dev client), nicht mit Expo Go
+- **Deep Links**: Schema ist `ultimate-timer`, konfiguriert in app.json
+- **React 19 Types**: skipLibCheck aktiviert wegen Inkompatibilitaet mit react-native-svg etc.
 
 ---
 

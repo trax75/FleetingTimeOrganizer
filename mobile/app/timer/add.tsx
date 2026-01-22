@@ -11,9 +11,16 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import type { TimerMode } from '@ultimate-timer/shared';
+import type { TimerMode, NotificationThreshold } from '@ultimate-timer/shared';
 import { useTimerStore } from '../../src/stores/timerStore';
 import { useTheme } from '../../src/hooks/useTheme';
+import { requestNotificationPermission } from '../../src/services/notificationService';
+
+const NOTIFICATION_OPTIONS: { value: NotificationThreshold; label: string }[] = [
+  { value: 50, label: '50%' },
+  { value: 80, label: '80%' },
+  { value: 100, label: '100%' },
+];
 
 // Format date for display
 function formatDateForDisplay(date: Date): string {
@@ -66,6 +73,35 @@ export default function AddTimerScreen() {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
   const [mode, setMode] = useState<TimerMode>('remaining');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationThresholds, setNotificationThresholds] = useState<NotificationThreshold[]>([100]);
+
+  const toggleThreshold = (threshold: NotificationThreshold) => {
+    setNotificationThresholds((prev) =>
+      prev.includes(threshold)
+        ? prev.filter((t) => t !== threshold)
+        : [...prev, threshold].sort((a, b) => a - b)
+    );
+  };
+
+  const handleToggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      // User wants to enable notifications - request permission first
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        setNotificationsEnabled(true);
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'Notifications are disabled. Please enable them in your device settings to receive timer alerts.',
+          [{ text: 'OK' }]
+        );
+      }
+    } else {
+      // User wants to disable notifications
+      setNotificationsEnabled(false);
+    }
+  };
 
   // Text inputs for manual entry
   const [startDateText, setStartDateText] = useState(formatDateForDisplay(new Date()));
@@ -200,6 +236,10 @@ export default function AddTimerScreen() {
       kind: 'custom',
       viewMode: mode,
       defaultViewMode: mode,
+      notifications: {
+        enabled: notificationsEnabled,
+        thresholds: notificationThresholds,
+      },
     });
 
     router.back();
@@ -372,6 +412,62 @@ export default function AddTimerScreen() {
         </Text>
       </View>
 
+      {/* Notifications */}
+      <View style={styles.field}>
+        <View style={styles.notificationHeader}>
+          <Text style={[styles.label, { color: theme.text, marginBottom: 0 }]}>Notifications</Text>
+          <Pressable
+            onPress={handleToggleNotifications}
+            style={[
+              styles.toggle,
+              {
+                backgroundColor: notificationsEnabled ? theme.primary : theme.surface,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Text style={{ color: notificationsEnabled ? '#fff' : theme.text, fontSize: 12 }}>
+              {notificationsEnabled ? 'ON' : 'OFF'}
+            </Text>
+          </Pressable>
+        </View>
+        {notificationsEnabled && (
+          <View style={styles.thresholdContainer}>
+            <Text style={[styles.hint, { color: theme.textTertiary, marginBottom: 8 }]}>
+              Get notified when progress reaches:
+            </Text>
+            <View style={styles.thresholdRow}>
+              {NOTIFICATION_OPTIONS.map((option) => {
+                const isSelected = notificationThresholds.includes(option.value);
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => toggleThreshold(option.value)}
+                    style={[
+                      styles.thresholdButton,
+                      {
+                        backgroundColor: isSelected ? theme.primary : theme.surface,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: isSelected ? '#fff' : theme.text,
+                        fontSize: 14,
+                        fontWeight: '500',
+                      }}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
+
       {/* Save Button */}
       <Pressable
         onPress={handleSave}
@@ -516,5 +612,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  toggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  thresholdContainer: {
+    marginTop: 4,
+  },
+  thresholdRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  thresholdButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
   },
 });
